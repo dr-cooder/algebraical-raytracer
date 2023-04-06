@@ -14,6 +14,10 @@ const Alg = {
     list,
     func,
   }),
+  flatten: (list) => ({
+    _tag: 'Flatten',
+    list,
+  }),
   multiply: (valueA, valueB) => ({
     _tag: 'Multiply',
     valueA,
@@ -28,27 +32,24 @@ const Alg = {
     _tag: 'Reciprocal',
     value,
   }),
-  quadratic: (a, b, c) => ({
-    _tag: 'Quadratic',
-    a,
-    b,
-    c,
+  sqrtPositive: (value) => ({
+    _tag: 'SqrtPositive',
+    value,
   }),
-  scale: (vector, scale) => ({
-    _tag: 'Scale',
-    vector,
-    scale,
+  plusMinus: (value) => ({
+    _tag: 'PlusMinus',
+    value,
   }),
-  vectorAdd: (vectorA, vectorB) => ({
-    _tag: 'VectorAdd',
-    vectorA,
-    vectorB,
+  combineXYZ: (x, y, z) => ({
+    _tag: 'CombineXYZ',
+    x,
+    y,
+    z,
   }),
-  dotProduct: (vectorA, vectorB) => ({
-    _tag: 'DotProduct',
-    vectorA,
-    vectorB,
-  }),
+  applyHitShader: (hit) => ({
+    _tag: 'ApplyHitShader',
+    hit,
+  })
 };
 
 export {

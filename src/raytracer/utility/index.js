@@ -1,3 +1,3 @@
 export { pipe } from './pipe.js';
-export { matchRecursive } from './matchRecursive.js';
+export { match } from './match.js';
 export { mapObject } from './mapObject.js';
