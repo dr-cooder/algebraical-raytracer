@@ -5,12 +5,18 @@ const API = {
   // Straight from algebra, simply destructure
   ...Alg,
   // Combinations: single-variable
+  negative: (value) => API.multiply(value, -1),
   multiplyMany: (...values) => API.reduce(values, API.multiply),
   addMany: (...values) => API.reduce(values, API.add),
   square: (value) => API.multiply(value, value),
   sqrts: (value) => API.plusMinus(API.sqrtPositive(value)),
   divide: (numerator, denominator) => API.multiply(numerator, API.reciprocal(denominator)),
-  subtract: (valueA, valueB) => API.add(valueA, API.multiply(valueB, -1)),
+  subtract: (valueA, valueB) => API.add(valueA, API.negative(valueB)),
+  max: (valueA, valueB) => API.negative(API.min(API.negative(valueA), API.negative(valueB))),
+  clampAboveZero: (value) => API.max(value, 0),
+  clampZeroOne: (value) => pipe(API.min, API.clampAboveZero)(value, 1),
+  round: (value) => pipe(API.add, API.floor)(value, 0.5),
+  degToRad: (value) => API.multiply(value, Math.PI / 180),
   // Combinations: complex single-variable formulas
   quadratic: (a, b, c) => API.map(
     API.sqrts(
@@ -71,22 +77,47 @@ const API = {
       },
     );
   },
-  // Combinations: raytracing
-  castRay: (point, vector, geometries) => API.reduce(
-    API.filter(
-      API.flatten(
-        API.map(
-          geometries,
-          geometry => geometry(point, vector),
-        ),
-      ),
-      hit => hit.t > 0
-    ),
-    (hitA, hitB) => hitA.t <= hitB.t ? hitA : hitB,
+  // Combinations: strings
+  joinManyStrings: (...strings) => API.reduce(strings, API.joinStrings),
+  // Combinations: colors (for simplicity's sake these are expressed as 'xyz' just like vectors instead of 'rgb'; more or less a similar idea)
+  combineRGB: (r, g, b) => API.combineXYZ(r, g, b),
+  rgbComponentToString: (component) => pipe(API.multiply, API.round)(API.clampZeroOne(component), 255),
+  colorToString: (color) => API.joinManyStrings(
+    'rgba(',
+    API.rgbComponentToString(color.x),
+    ',',
+    API.rgbComponentToString(color.y),
+    ',',
+    API.rgbComponentToString(color.z),
+    ',1.0)'
   ),
-  rayColor: (point, vector, geometries) => pipe(API.castRay, API.applyHitShader)(point, vector, geometries),
+  toGrayscale: (value) => API.combineXYZ(value, value, value),
+  colorAdd: (colorA, colorB) => API.vectorAdd(colorA, colorB),
   // Combinations: shaders
-  simpleDPShader: (shaderParams) => API.dotProduct(API.scale(shaderParams.incoming, -1), shaderParams.normal)
+  simpleDPShader: (shaderParams) => pipe(API.dotProduct, API.negative, API.clampAboveZero, API.toGrayscale, API.colorToString)(shaderParams.incoming, shaderParams.normal),
+  // Combinations: rendering!
+  castRay: (point, vector, geometries, skyShader) =>
+    API.nullishCoalescing(
+      API.reduce(
+        API.filter(
+          API.flatten(
+            API.map(
+              geometries,
+              geometry => geometry(point, vector),
+            ),
+          ),
+          hit => hit.t > 0
+        ),
+        (hitA, hitB) => hitA.t <= hitB.t ? hitA : hitB,
+      ),
+      {
+        shaderParams: {
+          incoming: vector,
+        },
+        shader: skyShader,
+      },
+    ),
+  rayColor: (point, vector, geometries, skyShader) => pipe(API.castRay, API.applyHitShader)(point, vector, geometries, skyShader),
 };
 
 export {

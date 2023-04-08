@@ -18,6 +18,11 @@ const Alg = {
     _tag: 'Flatten',
     list,
   }),
+  nullishCoalescing: (preferred, fallback) => ({
+    _tag: 'NullishCoalescing',
+    preferred,
+    fallback,
+  }),
   multiply: (valueA, valueB) => ({
     _tag: 'Multiply',
     valueA,
@@ -40,6 +45,15 @@ const Alg = {
     _tag: 'PlusMinus',
     value,
   }),
+  min: (valueA, valueB) => ({
+    _tag: 'Min',
+    valueA,
+    valueB,
+  }),
+  floor: (value) => ({
+    _tag: 'Floor',
+    value,
+  }),
   combineXYZ: (x, y, z) => ({
     _tag: 'CombineXYZ',
     x,
@@ -49,7 +63,12 @@ const Alg = {
   applyHitShader: (hit) => ({
     _tag: 'ApplyHitShader',
     hit,
-  })
+  }),
+  joinStrings: (stringA, stringB) => ({
+    _tag: 'JoinStrings',
+    stringA,
+    stringB,
+  }),
 };
 
 export {
