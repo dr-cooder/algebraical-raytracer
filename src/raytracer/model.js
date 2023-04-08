@@ -31,21 +31,10 @@ const API = {
     ),
   ),
   // Combinations: vectors
-  scale: (vector, scale) => API.combineXYZ(
-    API.multiply(vector.x, scale),
-    API.multiply(vector.y, scale),
-    API.multiply(vector.z, scale),
-  ),
-  vectorAdd: (vectorA, vectorB) => API.combineXYZ(
-    API.add(vectorA.x, vectorB.x),
-    API.add(vectorA.y, vectorB.y),
-    API.add(vectorA.z, vectorB.z),
-  ),
-  dotProduct: (vectorA, vectorB) => API.addMany(
-    API.multiply(vectorA.x, vectorB.x),
-    API.multiply(vectorA.y, vectorB.y),
-    API.multiply(vectorA.z, vectorB.z),
-  ),
+  scale: (vector, scale) => API.map(vector, entry => API.multiply(entry, scale)),
+  vectorAdd: (vectorA, vectorB) => API.entryWiseCombine(vectorA, vectorB, API.add),
+  vectorMultiply: (vectorA, vectorB) => API.entryWiseCombine(vectorA, vectorB, API.multiply),
+  dotProduct: (vectorA, vectorB) => API.reduce(API.vectorMultiply(vectorA, vectorB), API.add),
   rayParametric: (point, vector, t) => API.vectorAdd(point, API.scale(vector, t)),
   vectorSubtract: (vectorA, vectorB) => API.vectorAdd(vectorA, API.scale(vectorB, -1)),
   lengthNoSqrt: (vector) => API.dotProduct(vector, vector),
@@ -79,22 +68,18 @@ const API = {
   },
   // Combinations: strings
   joinManyStrings: (...strings) => API.reduce(strings, API.joinStrings),
-  // Combinations: colors (for simplicity's sake these are expressed as 'xyz' just like vectors instead of 'rgb'; more or less a similar idea)
+  // Combinations: colors (for simplicity's sake these are stored as 'xyz' just like vectors instead of 'rgb'; more or less a similar idea)
   combineRGB: (r, g, b) => API.combineXYZ(r, g, b),
-  rgbComponentToString: (component) => pipe(API.multiply, API.round)(API.clampZeroOne(component), 255),
-  colorToString: (color) => API.joinManyStrings(
+  rgbComponentToString: (component) => pipe(API.multiply, API.floor)(API.clampZeroOne(component), 255),
+  colorToString: (color) => API.join([
     'rgba(',
-    API.rgbComponentToString(color.x),
-    ',',
-    API.rgbComponentToString(color.y),
-    ',',
-    API.rgbComponentToString(color.z),
-    ',1.0)'
-  ),
+    API.join(API.map(color, API.rgbComponentToString), ','),
+    ',1.0)',
+  ], ''),
   toGrayscale: (value) => API.combineXYZ(value, value, value),
   colorAdd: (colorA, colorB) => API.vectorAdd(colorA, colorB),
   // Combinations: shaders
-  simpleDPShader: (shaderParams) => pipe(API.dotProduct, API.negative, API.clampAboveZero, API.toGrayscale, API.colorToString)(shaderParams.incoming, shaderParams.normal),
+  sunShader: (sunVector) => (shaderParams) => pipe(API.dotProduct, API.negative, API.clampAboveZero, API.toGrayscale)(shaderParams.normal, sunVector),
   // Combinations: rendering!
   castRay: (point, vector, geometries, skyShader) =>
     API.nullishCoalescing(
@@ -106,7 +91,7 @@ const API = {
               geometry => geometry(point, vector),
             ),
           ),
-          hit => hit.t > 0
+          hit => hit.t > 0,
         ),
         (hitA, hitB) => hitA.t <= hitB.t ? hitA : hitB,
       ),

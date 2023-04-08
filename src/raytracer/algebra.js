@@ -18,6 +18,11 @@ const Alg = {
     _tag: 'Flatten',
     list,
   }),
+  join: (list, separator) => ({
+    _tag: 'Join',
+    list,
+    separator,
+  }),
   nullishCoalescing: (preferred, fallback) => ({
     _tag: 'NullishCoalescing',
     preferred,
@@ -60,14 +65,15 @@ const Alg = {
     y,
     z,
   }),
+  entryWiseCombine: (listA, listB, func) => ({
+    _tag: 'EntryWiseCombine',
+    listA,
+    listB,
+    func,
+  }),
   applyHitShader: (hit) => ({
     _tag: 'ApplyHitShader',
     hit,
-  }),
-  joinStrings: (stringA, stringB) => ({
-    _tag: 'JoinStrings',
-    stringA,
-    stringB,
   }),
 };
 
