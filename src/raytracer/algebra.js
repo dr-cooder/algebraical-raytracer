@@ -71,6 +71,22 @@ const Alg = {
     listB,
     func,
   }),
+  rotateZ: (vector, theta) => ({
+    _tag: 'RotateZ',
+    vector,
+    theta,
+  }),
+  rearrangeList: (originalList, indexesFromOriginal) => ({
+    _tag: 'RearrangeList',
+    originalList,
+    indexesFromOriginal,
+  }),
+  combineShaders: (shaderA, shaderB, combiner) => ({
+    _tag: 'CombineShaders',
+    shaderA,
+    shaderB,
+    combiner,
+  }),
   applyHitShader: (hit) => ({
     _tag: 'ApplyHitShader',
     hit,

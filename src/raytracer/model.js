@@ -42,6 +42,34 @@ const API = {
   normalize: (vector) => API.scale(vector, API.reciprocal(API.length(vector))),
   project: (toProject, onto) => API.scale(onto, API.divide(API.dotProduct(toProject, onto), API.lengthNoSqrt(onto))),
   reflect: (incoming, normal) => API.vectorAdd(incoming, API.scale(API.project(incoming, normal), -2)),
+  rotateX: (vector, theta) =>
+    API.rearrangeList(
+      API.rotateZ(
+        API.rearrangeList(
+          vector,
+          [1, 2, 0],
+        ),
+        theta),
+      [2, 0, 1],
+    ),
+  rotateY: (vector, theta) =>
+    API.rearrangeList(
+      API.rotateZ(
+        API.rearrangeList(
+          vector,
+          [2, 0, 1],
+        ),
+        theta),
+      [1, 2, 0],
+    ),
+  applyTransformMatrix: (vector, matrix) => API.reduce(
+    API.entryWiseCombine(
+      vector,
+      matrix,
+      (component, axis) => API.scale(axis, component),
+    ),
+    API.vectorAdd,
+  ),
   // Combinations: geometry
   sphere: (center, radius, shader) => (point, vector) => {
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
@@ -68,7 +96,7 @@ const API = {
   },
   // Combinations: strings
   joinManyStrings: (...strings) => API.reduce(strings, API.joinStrings),
-  // Combinations: colors (for simplicity's sake these are stored as 'xyz' just like vectors instead of 'rgb'; more or less a similar idea)
+  // Combinations: colors (for simplicity's sake these are stored just like vectors; more or less a similar idea)
   combineRGB: (r, g, b) => API.combineXYZ(r, g, b),
   rgbComponentToString: (component) => pipe(API.multiply, API.floor)(API.clampZeroOne(component), 255),
   colorToString: (color) => API.join([
@@ -76,10 +104,16 @@ const API = {
     API.join(API.map(color, API.rgbComponentToString), ','),
     ',1.0)',
   ], ''),
-  toGrayscale: (value) => API.combineXYZ(value, value, value),
   colorAdd: (colorA, colorB) => API.vectorAdd(colorA, colorB),
+  colorBrightness: (color, brightness) => API.scale(color, brightness),
+  colorMultiply: (colorA, colorB) => API.vectorMultiply(colorA, colorB),
   // Combinations: shaders
-  sunShader: (sunVector) => (shaderParams) => pipe(API.dotProduct, API.negative, API.clampAboveZero, API.toGrayscale)(shaderParams.normal, sunVector),
+  sunLight: (sunVector, sunColor) => (shaderParams) => API.colorBrightness(sunColor, pipe(API.dotProduct, API.negative, API.clampAboveZero)(shaderParams.normal, sunVector)),
+  ambientLight: (color) => () => color,
+  multiplyShaders: (shaderA, shaderB) => API.combineShaders(shaderA, shaderB, API.colorMultiply),
+  addShaders: (shaderA, shaderB) => API.combineShaders(shaderA, shaderB, API.colorAdd),
+  multiplyManyShaders: (...shaders) => API.reduce(shaders, API.multiplyShaders),
+  addManyShaders: (...shaders) => API.reduce(shaders, API.addShaders),
   // Combinations: rendering!
   castRay: (point, vector, geometries, skyShader) =>
     API.nullishCoalescing(
