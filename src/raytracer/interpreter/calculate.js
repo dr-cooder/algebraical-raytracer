@@ -13,6 +13,11 @@ const matchFunctions = {
   Flatten: ({ list }) => calculate(list).map(calculate).flat(1),
   Join: ({ list, separator }) => calculate(list).map(calculate).join(calculate(separator)),
   NullishCoalescing: ({ preferred, fallback }) => calculate(preferred) ?? calculate(fallback),
+  Ternary: ({ boolean, ifTrue, ifFalse }) => calculate(boolean) ? calculate(ifTrue) : calculate(ifFalse),
+  IsEven: ({ value }) => {
+    const valCalculated = calculate(value);
+    return Math.abs(valCalculated) % 2 < 1
+  },
   Multiply: ({ valueA, valueB }) => calculate(valueA) * calculate(valueB),
   Add: ({ valueA, valueB }) => calculate(valueA) + calculate(valueB),
   Reciprocal: ({ value }) => 1 / calculate(value),
@@ -63,6 +68,7 @@ const matchFunctions = {
     }
     return newList;
   },
+  Entry: ({ list, index }) => calculate(list)[calculate(index)],
   CombineShaders: ({ shaderA, shaderB, combiner }) => {
     const shaderACalculated = calculate(shaderA);
     const shaderBCalculated = calculate(shaderB);

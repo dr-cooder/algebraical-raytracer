@@ -9,6 +9,8 @@ const identityMatrix = [
 ];
 
 const renderToCanvas = ({ ctx, width, height, cameraPosition, cameraPitch, cameraYaw, cameraFOV, objects, skyShader }) => {
+  const camPosCalculated = calculate(cameraPosition);
+
   const halfFovTan = Math.tan(calculate(Rt.degToRad(cameraFOV)) / 2);
   const greaterDimension = Math.max(width, height);
 
@@ -36,9 +38,7 @@ const renderToCanvas = ({ ctx, width, height, cameraPosition, cameraPitch, camer
       setTimeout(() => {
         const pixel = calculate(
           pipe(Rt.rayColor, Rt.colorToString)(
-            calculate(
-              cameraPosition,
-            ),
+            camPosCalculated,
             calculate(
               Rt.applyTransformMatrix(
                 Rt.normalize(

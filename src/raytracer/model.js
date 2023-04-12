@@ -70,6 +70,7 @@ const API = {
     ),
     API.vectorAdd,
   ),
+  z: (vector) => API.entry(vector, 2),
   // Combinations: geometry
   sphere: (center, radius, shader) => (point, vector) => {
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
@@ -94,6 +95,23 @@ const API = {
       },
     );
   },
+  groundPlane: (groundZ, shader) => (point, vector) => {
+    return API.map(
+      [API.divide(API.subtract(groundZ, API.z(point)), API.z(vector))],
+      (t) => {
+        const position = API.rayParametric(point, vector, t);
+        return {
+          t,
+          shaderParams: {
+            position,
+            normal: [0, 0, 1],
+            incoming: vector,
+          },
+          shader,
+        };
+      }
+    )
+  },
   // Combinations: strings
   joinManyStrings: (...strings) => API.reduce(strings, API.joinStrings),
   // Combinations: colors (for simplicity's sake these are stored just like vectors; more or less a similar idea)
@@ -110,6 +128,20 @@ const API = {
   // Combinations: shaders
   sunLight: (sunVector, sunColor) => (shaderParams) => API.colorBrightness(sunColor, pipe(API.dotProduct, API.negative, API.clampAboveZero)(shaderParams.normal, sunVector)),
   ambientLight: (color) => () => color,
+  checker: (scale, colorOdd, colorEven) => (shaderParams) =>
+  API.ternary(
+    API.isEven(
+      API.reduce(
+        API.map(
+          API.vectorMultiply(shaderParams.position, [1, 1, 0]),
+          entry => pipe(API.divide, API.floor)(entry, scale)
+        ),
+        API.add,
+      ),
+    ),
+    colorEven,
+    colorOdd,
+  ),
   multiplyShaders: (shaderA, shaderB) => API.combineShaders(shaderA, shaderB, API.colorMultiply),
   addShaders: (shaderA, shaderB) => API.combineShaders(shaderA, shaderB, API.colorAdd),
   multiplyManyShaders: (...shaders) => API.reduce(shaders, API.multiplyShaders),

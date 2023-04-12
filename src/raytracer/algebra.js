@@ -28,6 +28,16 @@ const Alg = {
     preferred,
     fallback,
   }),
+  ternary: (boolean, ifTrue, ifFalse) => ({
+    _tag: 'Ternary',
+    boolean,
+    ifTrue,
+    ifFalse,
+  }),
+  isEven: (value) => ({
+    _tag: 'IsEven',
+    value,
+  }),
   multiply: (valueA, valueB) => ({
     _tag: 'Multiply',
     valueA,
@@ -80,6 +90,11 @@ const Alg = {
     _tag: 'RearrangeList',
     originalList,
     indexesFromOriginal,
+  }),
+  entry: (list, index) => ({
+    _tag: 'Entry',
+    list,
+    index,
   }),
   combineShaders: (shaderA, shaderB, combiner) => ({
     _tag: 'CombineShaders',
