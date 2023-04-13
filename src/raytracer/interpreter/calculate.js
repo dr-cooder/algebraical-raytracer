@@ -74,12 +74,12 @@ const matchFunctions = {
     const shaderACalculated = calculate(shaderA);
     const shaderBCalculated = calculate(shaderB);
     const combinerCalculated = calculate(combiner);
-    return (shaderParams) => calculate(combinerCalculated(shaderACalculated(shaderParams), shaderBCalculated(shaderParams)));
+    return (...params) => calculate(combinerCalculated(shaderACalculated(...params), shaderBCalculated(...params)));
   },
-  ApplyHitShader: ({ hit }) => {
+  ApplyHitShader: ({ hit, geometries, skyShader, bouncesLeft }) => {
     const hitCalculated = calculate(hit);
     if ( hitCalculated === null) return null;
-    const calculatedColor = calculate(calculate(hitCalculated.shader)(mapObject(hitCalculated.shaderParams, calculate)));
+    const calculatedColor = calculate(calculate(hitCalculated.shader)(mapObject(hitCalculated.hitInfo, calculate), calculate(geometries), calculate(skyShader), calculate(bouncesLeft)));
     return calculatedColor;
   },
 };

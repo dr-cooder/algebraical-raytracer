@@ -54,6 +54,21 @@ const myObjects = [
     1.5,
     Rt.mirror(),
   ),
+  Rt.sphere(
+    Rt.combineXYZ(0, 4, 1.5),
+    1.5,
+    Rt.mirror(),
+  ),
+  Rt.sphere(
+    Rt.combineXYZ(4, 0, 1.5),
+    1.5,
+    Rt.mirror(),
+  ),
+  Rt.sphere(
+    Rt.combineXYZ(0, -4, 1.5),
+    1.5,
+    Rt.mirror(),
+  ),
   Rt.groundPlane(
     0,
     calculate(Rt.multiplyShaders(
@@ -67,10 +82,22 @@ const myObjects = [
   ),
 ].map(calculate);
 
-const mySkyColor = calculate(Rt.combineRGB(
-  0.5,
-  0.75,
-  1,
+const mySkyShader = calculate(Rt.standardSky(
+  Rt.combineRGB(
+    0.35,
+    0.5,
+    0.75
+  ),
+  Rt.combineRGB(
+    0.5,
+    0.75,
+    1.0
+  ),
+  Rt.combineRGB(
+    0.5,
+    0.5,
+    0.5
+  ),
 ));
 
 renderToCanvas({
@@ -82,5 +109,6 @@ renderToCanvas({
   cameraYaw: 46.6919,
   cameraFOV: 39.5978,
   objects: myObjects,
-  skyShader: () => mySkyColor,
+  skyShader: mySkyShader,
+  maxBounces: 2,
 });

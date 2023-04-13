@@ -8,7 +8,7 @@ const identityMatrix = [
   [0, 0, 1],
 ];
 
-const renderToCanvas = ({ ctx, width, height, cameraPosition, cameraPitch, cameraYaw, cameraFOV, objects, skyShader }) => {
+const renderToCanvas = ({ ctx, width, height, cameraPosition, cameraPitch, cameraYaw, cameraFOV, objects, skyShader, maxBounces }) => {
   const camPosCalculated = calculate(cameraPosition);
 
   const halfFovTan = Math.tan(calculate(Rt.degToRad(cameraFOV)) / 2);
@@ -53,7 +53,7 @@ const renderToCanvas = ({ ctx, width, height, cameraPosition, cameraPitch, camer
             ),
             objects,
             skyShader,
-            2,
+            maxBounces,
           ),
         );
         ctx.fillStyle = pixel;

@@ -106,9 +106,12 @@ const Alg = {
     shaderB,
     combiner,
   }),
-  applyHitShader: (hit) => ({
+  applyHitShader: (hit, geometries, skyShader, bouncesLeft) => ({
     _tag: 'ApplyHitShader',
     hit,
+    geometries,
+    skyShader,
+    bouncesLeft,
   }),
 };
 
