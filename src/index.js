@@ -4,7 +4,7 @@ import { renderToCanvas } from './raytracer/interpreter/renderToCanvas.js';
 
 // const width = 384, height = 288;
 const width = 192, height = 144;
-// const width = 16, height = 12;
+// const width = 64, height = 48;
 const canvas = document.querySelector('#canvas');
 canvas.width = width;
 canvas.height = height;
@@ -20,7 +20,7 @@ const myLights = calculate(Rt.addManyShaders(
     Rt.normalize(Rt.combineXYZ(
       1,
       1,
-      -1
+      -2,
     )),
     Rt.combineRGB(
       1,
@@ -48,6 +48,11 @@ const myObjects = [
       myLights,
       () => Rt.combineRGB(0.9, 0, 0,),
     )),
+  ),
+  Rt.sphere(
+    Rt.combineXYZ(-4, 0, 1.5),
+    1.5,
+    Rt.mirror(),
   ),
   Rt.groundPlane(
     0,

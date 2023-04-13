@@ -1,10 +1,13 @@
 import { Alg } from './algebra.js';
 import { pipe } from './utility/index.js';
 
+const RAY_EPSILON = 0.001;
+
 const API = {
   // Straight from algebra, simply destructure
   ...Alg,
   // Combinations: single-variable
+  nullishCoalescing: (preferred, fallback) => API.ternary(API.isNull(preferred), fallback, preferred),
   negative: (value) => API.multiply(value, -1),
   multiplyMany: (...values) => API.reduce(values, API.multiply),
   addMany: (...values) => API.reduce(values, API.add),
@@ -16,6 +19,7 @@ const API = {
   clampAboveZero: (value) => API.max(value, 0),
   clampZeroOne: (value) => pipe(API.min, API.clampAboveZero)(value, 1),
   round: (value) => pipe(API.add, API.floor)(value, 0.5),
+  greaterThanZero: (value) => API.greaterThan(value, 0),
   degToRad: (value) => API.multiply(value, Math.PI / 180),
   // Combinations: complex single-variable formulas
   quadratic: (a, b, c) => API.map(
@@ -36,7 +40,8 @@ const API = {
   vectorMultiply: (vectorA, vectorB) => API.entryWiseCombine(vectorA, vectorB, API.multiply),
   dotProduct: (vectorA, vectorB) => API.reduce(API.vectorMultiply(vectorA, vectorB), API.add),
   rayParametric: (point, vector, t) => API.vectorAdd(point, API.scale(vector, t)),
-  vectorSubtract: (vectorA, vectorB) => API.vectorAdd(vectorA, API.scale(vectorB, -1)),
+  vectorNegative: (vector) => API.scale(vector, -1),
+  vectorSubtract: (vectorA, vectorB) => API.vectorAdd(vectorA, API.vectorNegative(vectorB)),
   lengthNoSqrt: (vector) => API.dotProduct(vector, vector),
   length: (vector) => API.sqrtPositive(API.lengthNoSqrt(vector)),
   normalize: (vector) => API.scale(vector, API.reciprocal(API.length(vector))),
@@ -72,7 +77,7 @@ const API = {
   ),
   z: (vector) => API.entry(vector, 2),
   // Combinations: geometry
-  sphere: (center, radius, shader) => (point, vector) => {
+  sphere: (center, radius, shader) => (point, vector, geometries, skyShader, bouncesLeft) => {
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
     const centerToPoint = API.vectorSubtract(point, center);
     return API.map(
@@ -89,13 +94,16 @@ const API = {
             position,
             normal: API.scale(API.vectorSubtract(position, center), API.reciprocal(radius)),
             incoming: vector,
+            geometries,
+            skyShader,
+            bouncesLeft,
           },
           shader,
         };
       },
     );
   },
-  groundPlane: (groundZ, shader) => (point, vector) => {
+  groundPlane: (groundZ, shader) => (point, vector, geometries, skyShader, bouncesLeft) => {
     return API.map(
       [API.divide(API.subtract(groundZ, API.z(point)), API.z(vector))],
       (t) => {
@@ -106,6 +114,9 @@ const API = {
             position,
             normal: [0, 0, 1],
             incoming: vector,
+            geometries,
+            skyShader,
+            bouncesLeft,
           },
           shader,
         };
@@ -126,41 +137,59 @@ const API = {
   colorBrightness: (color, brightness) => API.scale(color, brightness),
   colorMultiply: (colorA, colorB) => API.vectorMultiply(colorA, colorB),
   // Combinations: shaders
-  sunLight: (sunVector, sunColor) => (shaderParams) => API.colorBrightness(sunColor, pipe(API.dotProduct, API.negative, API.clampAboveZero)(shaderParams.normal, sunVector)),
-  ambientLight: (color) => () => color,
-  checker: (scale, colorOdd, colorEven) => (shaderParams) =>
-  API.ternary(
-    API.isEven(
-      API.reduce(
-        API.map(
-          API.vectorMultiply(shaderParams.position, [1, 1, 0]),
-          entry => pipe(API.divide, API.floor)(entry, scale)
-        ),
-        API.add,
+  sunLight: (sunVector, sunColor) => (shaderParams) =>
+    API.colorBrightness(
+      sunColor,
+      API.ternary(
+        pipe(API.castRay, API.isNull)(shaderParams.position, API.vectorNegative(sunVector), shaderParams.geometries),
+        pipe(API.dotProduct, API.negative, API.clampAboveZero)(shaderParams.normal, sunVector),
+        0,
       ),
     ),
-    colorEven,
-    colorOdd,
-  ),
+  ambientLight: (color) => () => color,
+  mirror: () => (shaderParams) =>
+    API.rayColor(
+      shaderParams.position,
+      API.reflect(shaderParams.incoming, shaderParams.normal),
+      shaderParams.bouncesLeft > 0 ? shaderParams.geometries : [],
+      shaderParams.skyShader,
+      shaderParams.bouncesLeft - 1,
+    ),
+  checker: (scale, colorOdd, colorEven) => (shaderParams) =>
+    API.ternary(
+      API.isEven(
+        API.reduce(
+          API.map(
+            API.vectorMultiply(shaderParams.position, [1, 1, 0]),
+            entry => pipe(API.divide, API.floor)(entry, scale)
+          ),
+          API.add,
+        ),
+      ),
+      colorEven,
+      colorOdd,
+    ),
   multiplyShaders: (shaderA, shaderB) => API.combineShaders(shaderA, shaderB, API.colorMultiply),
   addShaders: (shaderA, shaderB) => API.combineShaders(shaderA, shaderB, API.colorAdd),
   multiplyManyShaders: (...shaders) => API.reduce(shaders, API.multiplyShaders),
   addManyShaders: (...shaders) => API.reduce(shaders, API.addShaders),
   // Combinations: rendering!
-  castRay: (point, vector, geometries, skyShader) =>
-    API.nullishCoalescing(
-      API.reduce(
-        API.filter(
-          API.flatten(
-            API.map(
-              geometries,
-              geometry => geometry(point, vector),
-            ),
+  castRay: (point, vector, geometries, skyShader, bouncesLeft) =>
+    API.reduce(
+      API.filter(
+        API.flatten(
+          API.map(
+            geometries,
+            geometry => geometry(point, vector, geometries, skyShader, bouncesLeft),
           ),
-          hit => hit.t > 0,
         ),
-        (hitA, hitB) => hitA.t <= hitB.t ? hitA : hitB,
+        hit => hit.t > RAY_EPSILON,
       ),
+      (hitA, hitB) => hitA.t <= hitB.t ? hitA : hitB,
+    ),
+  rayColor: (point, vector, geometries, skyShader, bouncesLeft) =>
+    pipe(API.nullishCoalescing, API.applyHitShader)(
+      API.castRay(point, vector, geometries, skyShader, bouncesLeft),
       {
         shaderParams: {
           incoming: vector,
@@ -168,7 +197,6 @@ const API = {
         shader: skyShader,
       },
     ),
-  rayColor: (point, vector, geometries, skyShader) => pipe(API.castRay, API.applyHitShader)(point, vector, geometries, skyShader),
 };
 
 export {

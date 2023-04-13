@@ -53,6 +53,7 @@ const renderToCanvas = ({ ctx, width, height, cameraPosition, cameraPitch, camer
             ),
             objects,
             skyShader,
+            2,
           ),
         );
         ctx.fillStyle = pixel;

@@ -23,10 +23,9 @@ const Alg = {
     list,
     separator,
   }),
-  nullishCoalescing: (preferred, fallback) => ({
-    _tag: 'NullishCoalescing',
-    preferred,
-    fallback,
+  isNull: (value) => ({
+    _tag: 'IsNull',
+    value,
   }),
   ternary: (boolean, ifTrue, ifFalse) => ({
     _tag: 'Ternary',
@@ -68,6 +67,11 @@ const Alg = {
   floor: (value) => ({
     _tag: 'Floor',
     value,
+  }),
+  greaterThan: (value, threshold) => ({
+    _tag: 'GreaterThan',
+    value,
+    threshold,
   }),
   combineXYZ: (x, y, z) => ({
     _tag: 'CombineXYZ',
