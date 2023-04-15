@@ -42,11 +42,11 @@ const renderToCanvas = ({ ctx, width, height, cameraPosition, cameraPitch, camer
             calculate(
               Rt.applyTransformMatrix(
                 Rt.normalize(
-                  Rt.combineXYZ(
+                  [
                     halfFovTan * ((x + 0.5) / width - 0.5) * 2 * (width / greaterDimension),
                     halfFovTan * ((y + 0.5) / height - 0.5) * -2 * (height / greaterDimension),
                     -1,
-                  ),
+                  ],
                 ),
                 cameraMatrix,
               ),

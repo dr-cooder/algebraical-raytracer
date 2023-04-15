@@ -119,10 +119,7 @@ const API = {
       }
     )
   },
-  // Combinations: strings
-  joinManyStrings: (...strings) => API.reduce(strings, API.joinStrings),
   // Combinations: colors (for simplicity's sake these are stored just like vectors; more or less a similar idea)
-  combineRGB: (r, g, b) => API.combineXYZ(r, g, b),
   rgbComponentToString: (component) => pipe(API.multiply, API.floor)(API.clampZeroOne(component), 255),
   colorToString: (color) => API.join([
     'rgba(',

@@ -30,7 +30,6 @@ const matchFunctions = {
   Min: ({ valueA, valueB }) => Math.min(calculate(valueA), calculate(valueB)),
   Floor: ({ value }) => Math.floor(calculate(value)),
   GreaterThan: ({ value, threshold }) => calculate(value) > calculate(threshold),
-  CombineXYZ: ({ x, y, z }) => [calculate(x), calculate(y), calculate(z)], // Expressing a vector as a list makes for much more efficient computation, allowing for map and reduce and such without recursively solving each entry individually
   EntryWiseCombine: ({ listA, listB, func }) => {
     const calculatedListA = calculate(listA).map(calculate);
     const calculatedListALength = calculatedListA.length;

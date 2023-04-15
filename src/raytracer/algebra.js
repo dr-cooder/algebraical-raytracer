@@ -73,12 +73,6 @@ const Alg = {
     value,
     threshold,
   }),
-  combineXYZ: (x, y, z) => ({
-    _tag: 'CombineXYZ',
-    x,
-    y,
-    z,
-  }),
   entryWiseCombine: (listA, listB, func) => ({
     _tag: 'EntryWiseCombine',
     listA,
